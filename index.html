@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Study Set Manager</title>
+  <style>
+    table,
+    th,
+    td {
+      border: 1px solid black;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 5px;
+      text-align: left;
+    }
+  </style>
+</head>
+
+<body>
+  <h2>學習集編輯器</h2>
+  <input style="margin: 10px" type="file" id="fileInput" multiple accept=".json" onchange="loadJSONFiles()">
+
+  <button onclick="selectAll()">全部勾選</button>
+  <button onclick="unselectAll()">取消選取</button>
+  <table id="jsonTable">
+    <tr>
+
+    </tr>
+    <!-- Rows will be added here dynamically -->
+  </table>
+  <button style="margin: 10px" onclick="generateCombinedJSON()">產生新學習集</button>
+  <div>
+    <textarea id="result" rows="10" cols="50"></textarea>
+  </div>
+
+
+  <script>
+    var jsonFiles = {};
+
+    function loadJSONFiles() {
+      var files = document.getElementById('fileInput').files;
+      Array.from(files).forEach(file => {
+        var reader = new FileReader();
+        reader.onload = function (event) {
+          var json = JSON.parse(event.target.result);
+          jsonFiles[file.name] = json; // Store the entire JSON content
+          createTable();
+        };
+        reader.readAsText(file);
+      });
+    }
+
+
+    function createTable() {
+      var table = document.getElementById('jsonTable');
+      table.innerHTML = '<tr><th>學習集名稱</th><th>目標單字</th></tr>'; // Reset the table
+      for (var fileName in jsonFiles) {
+        var row = table.insertRow(-1);
+        var cell1 = row.insertCell(0);
+        var cell2 = row.insertCell(1);
+        cell1.innerHTML = '<input type="checkbox" onclick="toggleFile(\'' + fileName + '\')" checked>' + fileName;
+        // Update this line to refer to the targetWords array in the complete JSON structure
+        cell2.innerHTML = jsonFiles[fileName].targetWords.map(function (word) {
+          return '<input type="checkbox" name="' + fileName + '" value="' + word + '" checked>' + word;
+        }).join('<br>');
+      }
+    }
+
+
+    function selectAll() {
+      var checkboxes = document.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach(function (checkbox) {
+        checkbox.checked = true;
+      });
+    }
+
+    function unselectAll() {
+      var checkboxes = document.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach(function (checkbox) {
+        checkbox.checked = false;
+      });
+    }
+
+    function toggleFile(fileName) {
+      var checkboxes = document.querySelectorAll('input[name="' + fileName + '"]');
+      var allChecked = Array.from(checkboxes).every(c => c.checked);
+      checkboxes.forEach(function (checkbox) {
+        checkbox.checked = !allChecked;
+      });
+    }
+
+    function generateCombinedJSON() {
+      var combinedResult = {
+        text: [],
+        exSenFinal: {},
+        definitions: {},
+        translations: {},
+        synonyms: {},
+        targetWords: [],
+        starTW: []
+      };
+
+      for (var fileName in jsonFiles) {
+        var selectedWords = Array.from(document.querySelectorAll('input[name="' + fileName + '"]:checked')).map(c => c.value);
+
+        // Check if any word is selected from this file, if so, add its title and text to the combined result
+        if (selectedWords.length > 0 && jsonFiles[fileName].text) {
+          combinedResult.text.push("\n\nSet: " + fileName + "\n" + jsonFiles[fileName].text);
+        }
+
+        selectedWords.forEach(word => {
+          if (jsonFiles[fileName].exSenFinal && jsonFiles[fileName].exSenFinal[word]) {
+            combinedResult.exSenFinal[word] = jsonFiles[fileName].exSenFinal[word];
+          }
+          if (jsonFiles[fileName].definitions && jsonFiles[fileName].definitions[word]) {
+            combinedResult.definitions[word] = jsonFiles[fileName].definitions[word];
+          }
+          if (jsonFiles[fileName].translations && jsonFiles[fileName].translations[word]) {
+            combinedResult.translations[word] = jsonFiles[fileName].translations[word];
+          }
+          if (jsonFiles[fileName].synonyms && jsonFiles[fileName].synonyms[word]) {
+            combinedResult.synonyms[word] = jsonFiles[fileName].synonyms[word];
+          }
+          if (!combinedResult.targetWords.includes(word)) {
+            combinedResult.targetWords.push(word);
+          }
+        });
+      }
+
+      // Convert the text array to a single string
+      combinedResult.text = combinedResult.text.join("\n\n");
+
+      document.getElementById('result').value = JSON.stringify(combinedResult, null, 2);
+
+      // Convert the combined result to a JSON string
+      var dataStr = JSON.stringify(combinedResult, null, 2);
+      document.getElementById('result').value = dataStr;
+
+      // Create a Blob from the JSON string
+      var dataBlob = new Blob([dataStr], {type: 'application/json'});
+
+      // Create a download link and trigger the download
+      var downloadLink = document.createElement('a');
+      downloadLink.href = window.URL.createObjectURL(dataBlob);
+      downloadLink.download = 'combined.json';
+      downloadLink.click();
+    }
+
+
+
+
+  </script>
+</body>
+
+</html>
