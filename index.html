@@ -3,46 +3,79 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Study Set Manager</title>
   <style>
-    table,
-    th,
-    td {
-      border: 1px solid black;
-      border-collapse: collapse;
+    body {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-
-    th,
-    td {
+  
+    table {
+      border-collapse: collapse;
+      width: 100%; /* Full width */
+      table-layout: auto; /* Adjust column width automatically */
+    }
+  
+    th, td {
+      border: 1px solid black;
       padding: 5px;
       text-align: left;
+      font-size: large;
+      white-space: nowrap; /* Prevent text from wrapping */
+    }
+  
+    .button {
+      font-size: large;
+    }
+  
+    @media (max-width: 600px) {
+      textarea {
+        width: 100%; /* Full width on small screens */
+      }
+    }
+  
+    .container-right {
+      text-align: right;
+      margin: 10px;
     }
   </style>
+  
 </head>
 
 <body>
-  <h2>學習集編輯器</h2>
-  <input style="margin: 10px" type="file" id="fileInput" multiple accept=".json" onchange="loadJSONFiles()">
-
-  <button onclick="selectAll()">全部勾選</button>
-  <button onclick="unselectAll()">取消選取</button>
-  <table id="jsonTable">
-    <tr>
-
-    </tr>
-    <!-- Rows will be added here dynamically -->
-  </table>
-  <button style="margin: 10px" onclick="generateCombinedJSON()">產生新學習集</button>
-  <div>
-    <textarea id="result" rows="10" cols="50"></textarea>
+  <div style="text-align: center;">
+    <h2>學習集編輯器</h2>
   </div>
+
+  <input class=button style="margin: 10px" type="file" id="fileInput" multiple accept=".json"
+    onchange="loadJSONFiles()">
+  <div id="editInterface" style="display: none;">
+    <div class="container-right">
+      <button class=button onclick="selectAll()">全部勾選</button>
+      <button class=button onclick="unselectAll()">取消選取</ button>
+    </div>
+
+    <table id="jsonTable">
+      <tr>
+
+      </tr>
+      <!-- Rows will be added here dynamically -->
+    </table>
+    <button class="button" style="margin: 10px" onclick="generateCombinedJSON()">產生新學習集</button>
+    <div>
+      <textarea id="result" rows="10" cols="50"></textarea>
+    </div>
+  </div>
+
 
 
   <script>
     var jsonFiles = {};
 
     function loadJSONFiles() {
+      document.getElementById('editInterface').style.display = "block"
       var files = document.getElementById('fileInput').files;
       Array.from(files).forEach(file => {
         var reader = new FileReader();
@@ -142,7 +175,7 @@
       document.getElementById('result').value = dataStr;
 
       // Create a Blob from the JSON string
-      var dataBlob = new Blob([dataStr], {type: 'application/json'});
+      var dataBlob = new Blob([dataStr], { type: 'application/json' });
 
       // Create a download link and trigger the download
       var downloadLink = document.createElement('a');
